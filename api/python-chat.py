@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
@@ -27,12 +28,24 @@ class handler(BaseHTTPRequestHandler):
 
             history = []
             for m in messages:
-                if m["role"] == "system":
-                    history.append(SystemMessage(content=m["content"]))
-                elif m["role"] == "user":
-                    history.append(HumanMessage(content=m["content"]))
-                elif m["role"] == "assistant":
-                    history.append(AIMessage(content=m["content"]))
+                role = m.get("role", "user")
+                # Support both {content: string} and Vercel AI SDK {parts: [{type: "text", text: string}]}
+                if isinstance(m.get("parts"), list):
+                    text_parts = [
+                        (p.get("text") or "")
+                        for p in m["parts"]
+                        if isinstance(p, dict) and p.get("type") == "text"
+                    ]
+                    content = "".join(text_parts)
+                else:
+                    content = m.get("content") or ""
+
+                if role == "system":
+                    history.append(SystemMessage(content=content))
+                elif role == "user":
+                    history.append(HumanMessage(content=content))
+                elif role == "assistant":
+                    history.append(AIMessage(content=content))
 
             ai = model.invoke(history)
 
