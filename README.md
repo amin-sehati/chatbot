@@ -29,18 +29,21 @@ A chatbot application built with Next.js frontend and Python serverless backend,
    CHAT_PASSWORD=your_password_here
    ```
 
-3. **Run development server:**
+3. **Start both servers for local development:**
+   
+   **Terminal 1 - Python API:**
+   ```bash
+   python run-python-api.py
+   ```
+   
+   **Terminal 2 - Next.js Frontend:**
    ```bash
    npm run dev
    ```
 
-4. **For Python backend testing (optional):**
-   ```bash
-   pip install -r requirements.txt
-   python -c "from api.python_chat import handler; print('Python backend ready')"
-   ```
-
-5. **Open [http://localhost:3000](http://localhost:3000)**
+4. **Open [http://localhost:3000](http://localhost:3000)**
+   
+   **Note:** For local development, the frontend will show an error for chat functionality since there are no Next.js API routes. The chat will work perfectly on Vercel where the Python serverless function handles all `/api/*` requests.
 
 ## Vercel Deployment
 
