@@ -6,7 +6,7 @@ import { useState } from "react";
 
 export default function Chat() {
   const { messages, sendMessage, status } = useChat({
-    transport: new TextStreamChatTransport({ api: "/routes/chat" }),
+    transport: new TextStreamChatTransport({ api: "/api/chat" }),
   });
   const [input, setInput] = useState("");
 

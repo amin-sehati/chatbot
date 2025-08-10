@@ -5,7 +5,7 @@ export function middleware(req: NextRequest) {
   // Allow login and static assets
   if (
     pathname.startsWith("/login") ||
-    pathname.startsWith("/routes/login") ||
+    pathname.startsWith("/api/login") ||
     pathname.startsWith("/api/python-chat") ||
     pathname.startsWith("/pychat") ||
     pathname.startsWith("/_next/") ||
