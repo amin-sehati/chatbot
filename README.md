@@ -26,6 +26,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
    Create a `.env.local` file:
    ```
    OPENAI_API_KEY=your_openai_api_key_here
+   CHAT_PASSWORD=your_password_here
    ```
 
 3. **Run development server:**
@@ -61,6 +62,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 3. **Set Environment Variables:**
    - In Vercel dashboard → Project Settings → Environment Variables
    - Add: `OPENAI_API_KEY` = `your_api_key_here`
+   - Add: `CHAT_PASSWORD` = `your_password_here`
 
 4. **Deploy:**
    - Vercel will automatically build and deploy
@@ -102,3 +104,4 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 | Variable | Description | Required |
 |----------|-------------|-----------|
 | `OPENAI_API_KEY` | OpenAI API key for GPT-4 | Yes |
+| `CHAT_PASSWORD` | Password for accessing the chat | Yes |
