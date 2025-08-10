@@ -1,20 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Repository layout for Vercel deployment:
+
+- `app/` Next.js App Router UI and routes.
+- `app/api/chat/route.ts` Frontend API route that converts AI SDK UI messages and forwards to the Python function.
+- `api/py-chat.py` Python serverless function (FastAPI + LangChain).
+- `requirements.txt` Python dependencies.
+- `vercel.json` Configures Python runtime and build commands.
+- `dev.sh` Local dev helper to run both servers.
 
 ## Getting Started
 
-First, run the development server:
+First, run the development servers:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+./dev.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
@@ -31,6 +32,6 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push to a Git repo, import into Vercel.
+2. Set `OPENAI_API_KEY` in Vercel Project Settings → Environment Variables.
+3. Deploy. The UI calls `/api/chat`, which proxies to the Python function `/api/py-chat` on Vercel.
