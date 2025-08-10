@@ -1,6 +1,7 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
+import type { UIMessage, UIMessagePart } from "ai";
 import { useState } from "react";
 
 export default function Chat() {
@@ -13,10 +14,12 @@ export default function Chat() {
   return (
     <div className="mx-auto max-w-2xl w-full h-[80vh] flex flex-col gap-4 p-4">
       <div className="flex-1 overflow-y-auto space-y-3">
-        {messages.map((message) => (
+        {messages.map((message: UIMessage<unknown>) => (
           <div key={message.id} className={message.role === "user" ? "text-right" : "text-left"}>
             <div className="inline-block rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800">
-              {message.parts.map((part: any, idx: number) => (part.type === "text" ? <span key={idx}>{part.text}</span> : null))}
+              {message.parts.map((part: UIMessagePart<any, any>, idx: number) => (
+                part.type === "text" ? <span key={idx}>{part.text}</span> : null
+              ))}
             </div>
           </div>
         ))}

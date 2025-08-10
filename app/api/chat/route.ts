@@ -2,12 +2,17 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const uiMessages = Array.isArray(body?.messages) ? body.messages : [];
-  const pyMessages = uiMessages.map((m: any) => ({
-    role: m?.role,
-    content: Array.isArray(m?.parts)
-      ? m.parts.filter((p: any) => p?.type === "text").map((p: any) => p?.text || "").join("")
-      : (m?.content ?? ""),
+  type UIPart = { type: "text"; text: string } | { type: string };
+  type UIMessage = { role: string; parts?: UIPart[]; content?: string };
+  const uiMessages: UIMessage[] = Array.isArray((body as any)?.messages) ? (body as any).messages : [];
+  const pyMessages = uiMessages.map((m) => ({
+    role: m.role,
+    content: Array.isArray(m.parts)
+      ? m.parts
+          .filter((p): p is Extract<UIPart, { type: "text" }> => p?.type === "text")
+          .map((p) => p.text || "")
+          .join("")
+      : m.content ?? "",
   }));
 
   const isVercel = !!process.env.VERCEL_URL;
