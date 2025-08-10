@@ -1,8 +1,1 @@
-{
-    "rewrites": [
-        {
-            "source": "/pychat",
-            "destination": "/api/python-chat.py"
-        }
-    ]
-} 
+{} 
