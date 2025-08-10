@@ -5,9 +5,8 @@ import type { UIMessage, UIMessagePart } from "ai";
 import { useState } from "react";
 
 export default function Chat() {
-  const api = process.env.NODE_ENV === "development" ? "/api/dev-chat" : "/api/chat";
   const { messages, sendMessage, status } = useChat({
-    transport: new TextStreamChatTransport({ api }),
+    transport: new TextStreamChatTransport({ api: "/routes/chat" }),
   });
   const [input, setInput] = useState("");
 

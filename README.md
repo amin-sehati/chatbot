@@ -1,18 +1,17 @@
 Repository layout for Vercel deployment:
 
 - `app/` Next.js App Router UI and routes.
-- `app/api/chat/route.ts` Frontend API route that converts AI SDK UI messages and forwards to the Python function.
-- `api/py-chat.py` Python serverless function (FastAPI + LangChain).
+- `app/routes/chat/route.ts` Frontend API route that converts AI SDK UI messages and forwards to the Python function.
+- `api/python-chat.py` Python serverless function (FastAPI + LangChain).
 - `requirements.txt` Python dependencies.
 - `vercel.json` Configures Python runtime and build commands.
-- `dev.sh` Local dev helper to run both servers.
 
 ## Getting Started
 
 First, run the development servers:
 
 ```bash
-./dev.sh
+npm run dev
 ```
 
 Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
@@ -34,4 +33,4 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 1. Push to a Git repo, import into Vercel.
 2. Set `OPENAI_API_KEY` in Vercel Project Settings → Environment Variables.
-3. Deploy. The UI calls `/api/chat`, which proxies to the Python function `/api/py-chat` on Vercel.
+3. Deploy. The UI calls `/routes/chat`, which proxies to the Python function `/pychat` on Vercel.
