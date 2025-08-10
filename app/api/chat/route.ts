@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || 
     (process.env.VERCEL ? 
       `https://${process.env.VERCEL_URL}/api/python-chat` : 
-      "http://127.0.0.1:8000/");
+      "http://localhost:3001/api/python-chat");
   
   const res = await fetch(pythonBackendUrl, {
     method: "POST",
