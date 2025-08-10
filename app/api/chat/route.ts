@@ -4,7 +4,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   type UIPart = { type: "text"; text: string } | { type: string };
   type UIMessage = { role: string; parts?: UIPart[]; content?: string };
-  const uiMessages: UIMessage[] = Array.isArray((body as any)?.messages) ? (body as any).messages : [];
+  const uiMessages: UIMessage[] = Array.isArray((body as { messages?: unknown })?.messages) ? (body as { messages: UIMessage[] }).messages : [];
   const pyMessages = uiMessages.map((m) => ({
     role: m.role,
     content: Array.isArray(m.parts)

@@ -17,7 +17,7 @@ export default function Chat() {
         {messages.map((message: UIMessage<unknown>) => (
           <div key={message.id} className={message.role === "user" ? "text-right" : "text-left"}>
             <div className="inline-block rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800">
-              {message.parts.map((part: UIMessagePart<any, any>, idx: number) => (
+              {message.parts.map((part: UIMessagePart<Record<string, unknown>, Record<string, { input: unknown; output: unknown }>>, idx: number) => (
                 part.type === "text" ? <span key={idx}>{part.text}</span> : null
               ))}
             </div>
