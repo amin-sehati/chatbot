@@ -3,4 +3,5 @@ langchain
 langchain-openai
 uvicorn
 python-dotenv
+pydantic
 

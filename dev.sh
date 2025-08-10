@@ -18,7 +18,7 @@ if ! command -v node >/dev/null 2>&1 || [ "$(node -v | sed 's/v//; s/\..*//')" -
 fi
 
 # Start Python API
-uv run uvicorn api.chat:app --host 127.0.0.1 --port 8000 --reload --no-access-log --log-level warning --loop uvloop --http httptools &
+uv run uvicorn api.python-chat:app --host 127.0.0.1 --port 8000 --reload --no-access-log --log-level warning --loop uvloop --http httptools &
 PY_PID=$!
 
 # Start Next.js (dev proxy will call the Python API)

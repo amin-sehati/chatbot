@@ -15,8 +15,9 @@ export async function POST(req: Request) {
       : m.content ?? "",
   }));
 
-  // Always proxy to Python FastAPI backend
-  const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000/";
+  // Always proxy to Python backend  
+  const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || 
+    (process.env.VERCEL ? "/api/python-chat" : "http://127.0.0.1:8000/");
   
   const res = await fetch(pythonBackendUrl, {
     method: "POST",
