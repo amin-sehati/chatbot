@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/pychat",
-            "destination": "/api/python-chat.py"
+            "destination": "/_api/python-chat.py"
         }
     ]
 } 
