@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('Error in python-chat:', error);
-    return new NextResponse(`Error: ${error.message}`, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new NextResponse(`Error: ${errorMessage}`, { status: 500 });
   }
 }
 
