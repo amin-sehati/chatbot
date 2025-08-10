@@ -3,6 +3,10 @@
     {
       "source": "/api/chat",
       "destination": "/api/python-chat.py"
+    },
+    {
+      "source": "/api/login",
+      "destination": "/api/login.py"
     }
   ]
 } 
