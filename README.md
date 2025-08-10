@@ -8,11 +8,16 @@ Repository layout for Vercel deployment:
 
 ## Getting Started
 
-First, run the development servers:
+First, run the development server:
 
 ```bash
 npm run dev
 ```
+And in a separate terminal, run the Python server:
+```bash
+uv run uvicorn api.python-chat:app --host 127.0.0.1 --port 8000
+```
+
 
 Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
 
