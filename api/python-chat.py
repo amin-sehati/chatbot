@@ -2,6 +2,9 @@ import json
 import os
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # For local development with FastAPI
 try:
@@ -20,17 +23,29 @@ try:
 
     @app.post("/")
     async def chat(req: ChatRequest):
-        model = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
-        history = []
-        for m in req.messages:
-            if m.role == "system":
-                history.append(SystemMessage(content=m.content))
-            elif m.role == "user":
-                history.append(HumanMessage(content=m.content))
-            elif m.role == "assistant":
-                history.append(AIMessage(content=m.content))
-        ai = await model.ainvoke(history)
-        return Response(content=ai.content, media_type="text/plain")
+        try:
+            print(f"Received request with {len(req.messages)} messages")
+            model = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY"))
+            history = []
+            for m in req.messages:
+                if m.role == "system":
+                    history.append(SystemMessage(content=m.content))
+                elif m.role == "user":
+                    history.append(HumanMessage(content=m.content))
+                elif m.role == "assistant":
+                    history.append(AIMessage(content=m.content))
+            print(f"Created history with {len(history)} messages")
+            ai = await model.ainvoke(history)
+            print(f"Got response: {ai.content[:50]}...")
+            return Response(content=ai.content, media_type="text/plain")
+        except Exception as e:
+            print(f"Error in chat endpoint: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
+            return Response(
+                content=f"Error: {str(e)}", media_type="text/plain", status_code=500
+            )
 
 except ImportError:
     # FastAPI not available (Vercel environment)
