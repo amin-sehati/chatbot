@@ -16,17 +16,39 @@ export async function POST(req: Request) {
   }));
 
   const isVercel = !!process.env.VERCEL_URL;
-  const target = isVercel
-    ? `https://${process.env.VERCEL_URL}/api/py_chat`
-    : "http://127.0.0.1:8000/";
+  
+  if (isVercel) {
+    // On Vercel, call OpenAI directly
+    if (!process.env.OPENAI_API_KEY) {
+      return new Response("OpenAI API key not configured", { status: 500 });
+    }
 
-  const res = await fetch(target, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: pyMessages }),
-  });
-  const text = await res.text();
-  return new Response(text, { status: res.status, headers: { "Content-Type": "text/plain" } });
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: pyMessages,
+      }),
+    });
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "No response";
+    
+    return new Response(content, { status: 200, headers: { "Content-Type": "text/plain" } });
+  } else {
+    // Local development - call Python FastAPI
+    const res = await fetch("http://127.0.0.1:8000/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: pyMessages }),
+    });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { "Content-Type": "text/plain" } });
+  }
 }
 
 
