@@ -1,11 +1,8 @@
 {
-"rewrites": [
-    {
-        "source": "/api/(.*)",
-        "destination": "/api/python-chat.py"
-    }
-    ],
-  "env": {
-    "OPENAI_API_KEY": "@OPENAI_API_KEY"
-  }
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/python-chat.py"
+        }
+    ]
 } 
