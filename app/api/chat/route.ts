@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   // Always proxy to Python backend  
   const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || 
     (process.env.VERCEL ? 
-      `https://${process.env.VERCEL_URL}/api/python-chat` : 
+      `https://${process.env.VERCEL_URL}/pychat` : 
       "http://localhost:3001/api/python-chat");
   
   const res = await fetch(pythonBackendUrl, {
