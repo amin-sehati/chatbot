@@ -15,7 +15,8 @@ export async function POST(req: Request) {
       : m.content ?? "",
   }));
 
-  const res = await fetch("http://127.0.0.1:8000/", {
+  const baseUrl = req.url ? new URL(req.url).origin : 'http://localhost:3001';
+  const res = await fetch(`${baseUrl}/api/python-chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages: pyMessages }),
