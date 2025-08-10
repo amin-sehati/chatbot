@@ -7,9 +7,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
+# Environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+CHAT_PASSWORD = os.getenv("CHAT_PASSWORD")
 
 app = FastAPI()
 
