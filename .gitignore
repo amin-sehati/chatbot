@@ -45,3 +45,4 @@ __pycache__/
 .venv/
 .python-version
 .pytest_cache/
+.vercel
