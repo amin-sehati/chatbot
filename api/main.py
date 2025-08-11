@@ -107,7 +107,7 @@ def search_companies(query: str) -> str:
         results = []
         for result in response.get("results", [])[:5]:  # Limit to top 5 results
             results.append(
-                f"• {result.get('title', 'N/A')}: {result.get('content', 'N/A')[:200]}..."
+                f"• {result.get('title', 'N/A')}: {result.get('content', 'N/A')}..."
             )
 
         return f"🔍 Tool executed: Found companies using web search\n\n" + "\n".join(
@@ -167,29 +167,30 @@ def _respond_stream(messages: List[Dict[str, Any]]):
     try:
         # Create model with streaming enabled
         model = ChatOpenAI(
-            model="gpt-4o-mini", 
-            api_key=OPENAI_API_KEY, 
-            streaming=True,
-            temperature=0.7
+            model="gpt-4o-mini", api_key=OPENAI_API_KEY, streaming=True, temperature=0.7
         )
         tools = [search_companies]
         model_with_tools = model.bind_tools(tools)
 
         # Create prompt template
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant. When users ask about finding companies in specific markets or problems, use the search_companies tool to help them. Always be informative and helpful."),
-            ("placeholder", "{chat_history}"),
-            ("human", "{input}"),
-            ("placeholder", "{agent_scratchpad}"),
-        ])
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """You are a helpful assistant. When users ask about finding companies in specific markets or problems, 
+                    use the search_companies tool to help them. If you have used the tool, say so by adding to the beginning
+                      of your response '🔍 Company Search Tool executed: Found companies using web search\n\n'.""",
+                ),
+                ("placeholder", "{chat_history}"),
+                ("human", "{input}"),
+                ("placeholder", "{agent_scratchpad}"),
+            ]
+        )
 
         # Create agent
         agent = create_tool_calling_agent(model_with_tools, tools, prompt)
         agent_executor = AgentExecutor(
-            agent=agent, 
-            tools=tools, 
-            verbose=True,
-            return_intermediate_steps=True
+            agent=agent, tools=tools, verbose=True, return_intermediate_steps=True
         )
 
         # Convert messages to chat history
@@ -197,30 +198,33 @@ def _respond_stream(messages: List[Dict[str, Any]]):
         latest_message = messages[-1].get("content", "") if messages else ""
 
         log_debug(f"Starting agent execution for: {latest_message}")
-        
+
         # Execute the agent and get the full response first
-        response = agent_executor.invoke({
-            "input": latest_message,
-            "chat_history": history[:-1],
-        })
-        
+        response = agent_executor.invoke(
+            {
+                "input": latest_message,
+                "chat_history": history[:-1],
+            }
+        )
+
         # Get the content to stream
         content = response["output"]
         log_debug(f"Got response content: {len(content)} characters")
-        
+
         # Stream word by word for better readability
         words = content.split()
         for i, word in enumerate(words):
             if i > 0:
                 yield " "  # Space between words
             yield word
-        
+
         log_debug("Streaming completed successfully")
-        
+
     except Exception as e:
         log_debug(f"Streaming error: {e}", "ERROR")
         log_debug(f"Traceback: {traceback.format_exc()}", "ERROR")
         yield "I apologize, but I encountered an error processing your request. Please try again."
+
 
 def _respond(messages: List[Dict[str, Any]]) -> str:
     """Non-streaming response for compatibility"""
@@ -231,7 +235,7 @@ def _respond(messages: List[Dict[str, Any]]) -> str:
         )
 
     # Create model with tool binding
-    model = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model="gpt-4o", api_key=OPENAI_API_KEY)
     tools = [search_companies]
     model_with_tools = model.bind_tools(tools)
 
@@ -371,7 +375,7 @@ async def chat(request: Request):
             # Stream the actual response directly
             for chunk in _respond_stream(messages_dict):
                 yield chunk
-                
+
         log_debug("Starting streaming response...")
         return StreamingResponse(generate(), media_type="text/plain")
 
@@ -484,12 +488,12 @@ def handle_chat_request(data):
             }
 
         log_debug("Calling _respond_stream function...")
-        
+
         # For BaseHTTPRequestHandler, collect all streaming chunks
         response_chunks = []
         for chunk in _respond_stream(messages_dict):
             response_chunks.append(chunk)
-        
+
         # Join all chunks to create the full response
         text = "".join(response_chunks)
         log_debug(f"Response generated successfully: {len(text)} characters")
