@@ -5,5 +5,4 @@ tavily-python
 uvicorn
 python-dotenv
 pydantic
-mangum
 

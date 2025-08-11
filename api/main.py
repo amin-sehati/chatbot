@@ -158,7 +158,9 @@ def _history_from_messages(messages: List[Dict[str, Any]]):
 def _respond(messages: List[Dict[str, Any]]) -> str:
     if not OPENAI_API_KEY:
         log_debug("OPENAI_API_KEY not set, returning fallback response", "WARNING")
-        return "I'm sorry, the AI service is not configured. Please check your API keys."
+        return (
+            "I'm sorry, the AI service is not configured. Please check your API keys."
+        )
 
     # Create model with tool binding
     model = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
@@ -205,6 +207,7 @@ def _respond(messages: List[Dict[str, Any]]) -> str:
 
 
 @app.post("/login")
+@app.post("/api/login")
 async def login(request: LoginRequest):
     if not CHAT_PASSWORD:
         raise HTTPException(status_code=500, detail="Server not configured")
@@ -227,6 +230,7 @@ async def login(request: LoginRequest):
 
 
 @app.post("/chat")
+@app.post("/api/chat")
 async def chat(request: Request):
     log_debug("=== CHAT REQUEST START ===")
 
@@ -318,8 +322,179 @@ async def chat(request: Request):
         )
 
 
-# Vercel serverless function handler
-from mangum import Mangum
+# Vercel-compatible handler (BaseHTTPRequestHandler)
+from http.server import BaseHTTPRequestHandler
 
-# Create the handler for Vercel
-handler = Mangum(app)
+
+def handle_login_request(data):
+    password = data.get("password", "")
+
+    if not CHAT_PASSWORD:
+        return {
+            "status": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"error": "Server not configured"}),
+        }
+
+    if password != CHAT_PASSWORD:
+        return {
+            "status": 401,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"error": "Unauthorized"}),
+        }
+
+    # Success response with cookie
+    headers = {
+        "Content-Type": "application/json",
+        "Set-Cookie": "chat_auth=1; HttpOnly; SameSite=Lax; Max-Age=604800; Path=/"
+        + ("; Secure" if os.environ.get("VERCEL") else ""),
+    }
+    return {"status": 200, "headers": headers, "body": json.dumps({"ok": True})}
+
+
+def handle_chat_request(data):
+    log_debug("=== CHAT REQUEST START ===")
+    log_debug(f"RAW REQUEST DATA: {json.dumps(data, indent=2)}")
+
+    messages = data.get("messages", [])
+    log_debug(f"Received {len(messages)} messages")
+
+    try:
+        # Enhanced message parsing (same logic as FastAPI version)
+        messages_dict = []
+        for i, msg in enumerate(messages):
+            log_debug(f"Processing message {i}: {json.dumps(msg, indent=2)}")
+
+            # Handle ai-sdk format where content might be in different places
+            content = ""
+            parts = []
+
+            if isinstance(msg, dict):
+                # Try different ways to extract content (prioritize 'text' field for ai-sdk)
+                if "text" in msg:
+                    content = msg.get("text", "")
+                elif "content" in msg:
+                    content = msg.get("content", "")
+                elif "parts" in msg and isinstance(msg["parts"], list):
+                    # Extract text from parts array
+                    text_parts = []
+                    for part in msg["parts"]:
+                        if isinstance(part, dict):
+                            if part.get("type") == "text" and "text" in part:
+                                text_parts.append(part["text"])
+                            elif "text" in part:
+                                text_parts.append(part["text"])
+                    content = "".join(text_parts)
+                    parts = msg["parts"]
+
+                role = msg.get("role", "user")
+            else:
+                # Fallback for other formats
+                content = getattr(msg, "content", "") or getattr(msg, "text", "")
+                role = getattr(msg, "role", "user")
+                parts = getattr(msg, "parts", [])
+
+            msg_dict = {
+                "role": role,
+                "content": content,
+                "parts": parts,
+            }
+            log_debug(f"Converted message {i}: {json.dumps(msg_dict, indent=2)}")
+            messages_dict.append(msg_dict)
+
+        log_debug(f"FINAL MESSAGES_DICT: {json.dumps(messages_dict, indent=2)}")
+
+        # Check if we have any actual content
+        if not messages_dict or not any(
+            msg.get("content", "").strip() for msg in messages_dict
+        ):
+            log_debug("WARNING: No content found in messages!", "WARNING")
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/plain"},
+                "body": "No message content received. Please try again.",
+            }
+
+        log_debug("Calling _respond function...")
+        text = _respond(messages_dict)
+        log_debug(f"Response generated successfully: {len(text)} characters")
+
+        return {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": text}
+
+    except Exception as e:
+        error_details = traceback.format_exc()
+        log_debug(f"CHAT ERROR: {str(e)}", "ERROR")
+        log_debug(f"CHAT TRACEBACK:\n{error_details}", "ERROR")
+
+        return {
+            "status": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps(
+                {
+                    "error": str(e),
+                    "traceback": error_details,
+                    "openai_key_present": bool(OPENAI_API_KEY),
+                    "message_count": len(messages) if "messages" in locals() else 0,
+                }
+            ),
+        }
+
+
+class handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        try:
+            log_debug(f"=== REQUEST START === Path: {self.path}")
+            content_length = int(self.headers["Content-Length"])
+            body = self.rfile.read(content_length)
+            data = json.loads(body.decode("utf-8"))
+            log_debug(f"Request body parsed successfully")
+
+            # Route based on path
+            if self.path == "/api/login":
+                log_debug("Routing to login handler")
+                response = handle_login_request(data)
+            elif self.path == "/api/chat":
+                log_debug("Routing to chat handler")
+                response = handle_chat_request(data)
+            else:
+                log_debug(f"Unknown path: {self.path}")
+                response = {
+                    "status": 404,
+                    "headers": {"Content-Type": "text/plain"},
+                    "body": "Not Found",
+                }
+
+            # Send response
+            log_debug(f"Sending response with status {response['status']}")
+            self.send_response(response["status"])
+            for key, value in response["headers"].items():
+                self.send_header(key, value)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(response["body"].encode("utf-8"))
+            log_debug("=== REQUEST COMPLETE ===")
+
+        except Exception as e:
+            error_details = traceback.format_exc()
+            log_debug(f"HANDLER ERROR: {str(e)}", "ERROR")
+            log_debug(f"HANDLER TRACEBACK:\n{error_details}", "ERROR")
+
+            self.send_response(500)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            error_response = json.dumps(
+                {
+                    "error": str(e),
+                    "traceback": error_details,
+                    "path": getattr(self, "path", "unknown"),
+                }
+            )
+            self.wfile.write(error_response.encode("utf-8"))
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
