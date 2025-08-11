@@ -2,6 +2,8 @@ import json
 import os
 import traceback
 import sys
+import asyncio
+import time
 from typing import List, Dict, Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -155,7 +157,73 @@ def _history_from_messages(messages: List[Dict[str, Any]]):
     return history
 
 
+def _respond_stream(messages: List[Dict[str, Any]]):
+    """Generator function that yields streaming responses using proper Data Stream Protocol"""
+    if not OPENAI_API_KEY:
+        log_debug("OPENAI_API_KEY not set, returning fallback response", "WARNING")
+        yield "I'm sorry, the AI service is not configured. Please check your API keys."
+        return
+
+    try:
+        # Create model with streaming enabled
+        model = ChatOpenAI(
+            model="gpt-4o-mini", 
+            api_key=OPENAI_API_KEY, 
+            streaming=True,
+            temperature=0.7
+        )
+        tools = [search_companies]
+        model_with_tools = model.bind_tools(tools)
+
+        # Create prompt template
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful assistant. When users ask about finding companies in specific markets or problems, use the search_companies tool to help them. Always be informative and helpful."),
+            ("placeholder", "{chat_history}"),
+            ("human", "{input}"),
+            ("placeholder", "{agent_scratchpad}"),
+        ])
+
+        # Create agent
+        agent = create_tool_calling_agent(model_with_tools, tools, prompt)
+        agent_executor = AgentExecutor(
+            agent=agent, 
+            tools=tools, 
+            verbose=True,
+            return_intermediate_steps=True
+        )
+
+        # Convert messages to chat history
+        history = _history_from_messages(messages)
+        latest_message = messages[-1].get("content", "") if messages else ""
+
+        log_debug(f"Starting agent execution for: {latest_message}")
+        
+        # Execute the agent and get the full response first
+        response = agent_executor.invoke({
+            "input": latest_message,
+            "chat_history": history[:-1],
+        })
+        
+        # Get the content to stream
+        content = response["output"]
+        log_debug(f"Got response content: {len(content)} characters")
+        
+        # Stream word by word for better readability
+        words = content.split()
+        for i, word in enumerate(words):
+            if i > 0:
+                yield " "  # Space between words
+            yield word
+        
+        log_debug("Streaming completed successfully")
+        
+    except Exception as e:
+        log_debug(f"Streaming error: {e}", "ERROR")
+        log_debug(f"Traceback: {traceback.format_exc()}", "ERROR")
+        yield "I apologize, but I encountered an error processing your request. Please try again."
+
 def _respond(messages: List[Dict[str, Any]]) -> str:
+    """Non-streaming response for compatibility"""
     if not OPENAI_API_KEY:
         log_debug("OPENAI_API_KEY not set, returning fallback response", "WARNING")
         return (
@@ -296,15 +364,15 @@ async def chat(request: Request):
                 media_type="text/plain",
             )
 
-        log_debug("Calling _respond function...")
-        text = _respond(messages_dict)
-        log_debug(f"Response generated successfully: {len(text)} characters")
+        log_debug("Calling _respond_stream function...")
 
-        # Return the response as streaming for ai-sdk compatibility
-        # But send the full text at once for Vercel compatibility
+        # Return streaming response using proper async generator
         async def generate():
-            yield text
-
+            # Stream the actual response directly
+            for chunk in _respond_stream(messages_dict):
+                yield chunk
+                
+        log_debug("Starting streaming response...")
         return StreamingResponse(generate(), media_type="text/plain")
 
     except Exception as e:
@@ -415,8 +483,15 @@ def handle_chat_request(data):
                 "body": "No message content received. Please try again.",
             }
 
-        log_debug("Calling _respond function...")
-        text = _respond(messages_dict)
+        log_debug("Calling _respond_stream function...")
+        
+        # For BaseHTTPRequestHandler, collect all streaming chunks
+        response_chunks = []
+        for chunk in _respond_stream(messages_dict):
+            response_chunks.append(chunk)
+        
+        # Join all chunks to create the full response
+        text = "".join(response_chunks)
         log_debug(f"Response generated successfully: {len(text)} characters")
 
         return {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": text}
