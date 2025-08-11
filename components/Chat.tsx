@@ -5,10 +5,10 @@ import type { UIMessage, UIMessagePart } from "ai";
 import { useState } from "react";
 
 export default function Chat() {
-  // In development, directly call the Python server
+  // In development, directly call the FastAPI server
   // In production, use Vercel's routed endpoint
   const apiEndpoint = process.env.NODE_ENV === 'development' 
-    ? "http://localhost:8080/api/chat"
+    ? "http://localhost:8080/chat"
     : "/api/chat";
     
   const { messages, sendMessage, status } = useChat({

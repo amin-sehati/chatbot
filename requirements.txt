@@ -1,7 +1,9 @@
 fastapi
 langchain
 langchain-openai
+tavily-python
 uvicorn
 python-dotenv
 pydantic
+mangum
 
