@@ -70,11 +70,21 @@ export default function CompanySearch() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})) as any;
-        const errorMessage = errorData?.detail?.error || 
-                           errorData?.detail || 
-                           errorData?.error || 
-                           `Search failed (${response.status})`;
+        let errorMessage = `Search failed (${response.status})`;
+        try {
+          const errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            if (typeof errorData.detail === 'object' && errorData.detail?.error) {
+              errorMessage = errorData.detail.error;
+            } else if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail;
+            } else if (errorData.error) {
+              errorMessage = errorData.error;
+            }
+          }
+        } catch {
+          // Use default error message if JSON parsing fails
+        }
         throw new Error(errorMessage);
       }
 
@@ -296,7 +306,7 @@ export default function CompanySearch() {
                       {/* Justification */}
                       <div className="border-t border-border pt-3">
                         <p className="text-sm text-muted-foreground">
-                          <span className="font-medium">Why it's similar:</span> {item.justification}
+                          <span className="font-medium">Why it&apos;s similar:</span> {item.justification}
                         </p>
                       </div>
 
