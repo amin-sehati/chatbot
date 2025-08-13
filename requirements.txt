@@ -1,6 +1,7 @@
 fastapi
 langchain
-langchain-openai
+langchain-groq
+langchain-core
 tavily-python
 uvicorn
 python-dotenv

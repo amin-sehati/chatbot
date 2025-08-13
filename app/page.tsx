@@ -1,9 +1,9 @@
-import Chat from "@/components/Chat";
+import CompanySearch from "@/components/CompanySearch";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-muted/20 p-4">
-      <Chat />
+      <CompanySearch />
     </main>
   );
 }

@@ -5,7 +5,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 ## Repository Structure
 
 - `app/` - Next.js App Router UI and routes
-- `api/python-chat.py` - Python serverless function (FastAPI + LangChain + OpenAI)
+- `api/python-chat.py` - Python serverless function (FastAPI + LangChain + Groq)
 - `requirements.txt` - Python dependencies
 - `vercel.json` - Routing configuration for Vercel
 
@@ -13,7 +13,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 
 - Node.js 18+ and npm
 - Python 3.9+
-- OpenAI API key
+- Groq API key
 
 ## Local Development
 
@@ -25,7 +25,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 2. **Set up environment variables:**
    Create a `.env.local` file:
    ```
-   OPENAI_API_KEY=your_openai_api_key_here
+   GROQ_API_KEY=your_groq_api_key_here
    CHAT_PASSWORD=your_password_here
    ```
 
@@ -64,7 +64,7 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 
 3. **Set Environment Variables:**
    - In Vercel dashboard → Project Settings → Environment Variables
-   - Add: `OPENAI_API_KEY` = `your_api_key_here`
+   - Add: `GROQ_API_KEY` = `your_api_key_here`
    - Add: `CHAT_PASSWORD` = `your_password_here`
 
 4. **Deploy:**
@@ -86,25 +86,25 @@ A chatbot application built with Next.js frontend and Python serverless backend,
 
 3. **Set environment variables:**
    ```bash
-   vercel env add OPENAI_API_KEY
+   vercel env add GROQ_API_KEY
    ```
 
 ## How It Works
 
 - Frontend: Next.js React app with chat interface
-- Backend: Python serverless function using FastAPI + LangChain + OpenAI GPT-4
+- Backend: Python serverless function using FastAPI + LangChain + Groq meta-llama/llama-4-maverick-17b-128e-instruct
 - Routing: `/api/chat` → `api/python-chat.py` (configured in `vercel.json`)
 - Vercel automatically detects Python runtime from `requirements.txt`
 
 ## Troubleshooting
 
 - **404 on `/api/chat`**: Ensure `vercel.json` has the correct rewrite rule
-- **Python errors**: Check that `OPENAI_API_KEY` is set in Vercel environment variables
+- **Python errors**: Check that `GROQ_API_KEY` is set in Vercel environment variables
 - **Build failures**: Ensure `requirements.txt` includes all Python dependencies
 
 ## Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|-----------|
-| `OPENAI_API_KEY` | OpenAI API key for GPT-4 | Yes |
+| `GROQ_API_KEY` | Groq API key for meta-llama/llama-4-maverick-17b-128e-instruct | Yes |
 | `CHAT_PASSWORD` | Password for accessing the chat | Yes |
